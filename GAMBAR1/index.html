@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Template Ruang Objek WebAR</title>
+    
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <style>
+        /* Reset & Base Style */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* 3. DESAIN UI WATERMARK & KUSTOMISASI */
+        /* Watermark Identitas (Pojok Kiri Atas) */
+        .ui-watermark {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            pointer-events: auto;
+        }
+
+        .ui-watermark img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .ui-watermark .text-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ui-watermark h1 {
+            margin: 0;
+            font-size: 14px;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .ui-watermark p {
+            margin: 2px 0 0 0;
+            font-size: 11px;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        /* Tombol UI Info (Pojok Kanan Bawah) */
+        .ui-btn-container {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+            display: none; /* Hidden by default, controlled via JS */
+        }
+
+        .btn-info {
+            background: #0ea5e9;
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            border-radius: 50px; /* Pill-shaped */
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.4), 0 4px 6px -4px rgba(14, 165, 233, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .btn-info:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Modal Box / Info Box (Tengah Layar) */
+        .ui-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.4);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .ui-modal-box {
+            width: 85%;
+            max-width: 400px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid #38bdf8;
+            border-radius: 16px;
+            padding: 24px;
+            color: #ffffff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            box-sizing: border-box;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .ui-modal-box h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #38bdf8;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .ui-modal-box p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #e2e8f0;
+            margin: 20px 0;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .btn-close {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-close:hover {
+            background: #dc2626;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .ui-watermark { top: 15px; left: 15px; padding: 8px 12px; }
+            .ui-watermark h1 { font-size: 12px; }
+            .ui-watermark p { font-size: 10px; }
+            .ui-btn-container { bottom: 20px; right: 20px; }
+            .btn-info { padding: 12px 22px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui-watermark">
+        <img src="logo-watermark.png" alt="Logo" onerror="this.style.display='none'">
+        <div class="text-container">
+            <h1>Proyek Individu</h1>
+            <p>MUHAMMAD AFDHAL / PGSD D24</p>
+        </div>
+    </div>
+
+    <div class="ui-btn-container" id="infoBtnContainer">
+        <button class="btn-info" id="openInfoBtn">BACA INFO OBJEK</button>
+    </div>
+
+    <div class="ui-modal-overlay" id="infoModal">
+        <div class="ui-modal-box">
+            <h2>habitat</h2>
+            <p id="infoText">
+                Habitat adalah tempat tinggal alami suatu makhluk hidup yang menyediakan segala kebutuhan untuk mempertahankan hidupnya. Dalam habitatnya, makhluk hidup memperoleh makanan, air, udara, tempat berlindung, dan tempat berkembang biak.
+
+Setiap makhluk hidup memiliki habitat yang berbeda-beda sesuai dengan kebutuhan dan kemampuan beradaptasinya. Habitat yang sesuai membantu makhluk hidup tumbuh, berkembang, dan melestarikan keturunannya.
+            </p>
+            <button class="btn-close" id="closeInfoBtn">Tutup</button>
+        </div>
+    </div>
+
+    <a-scene 
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true; precision: high;"
+        id="scene-container">
+        
+        <a-assets>
+            <a-asset-item id="model-utama" src="Habitat.glb"></a-asset-item>
+        </a-assets>
+
+        <a-marker preset="hiro" id="hiroMarker">
+            
+            <a-text 
+                value="NAMA OBJEK" 
+                color="#38bdf8" 
+                align="center" 
+                position="0 1.8 0" 
+                scale="1 1 1"
+                rotation="0 0 0"
+                font="ascii">
+            </a-text>
+
+            <a-entity 
+                id="targetModel"
+                gltf-model="#model-utama" 
+                position="0 0.9 0" 
+                scale="5 5 5"
+                rotation="0 0 0">
+            </a-entity>
+
+        </a-marker>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Deklarasi DOM Elements
+        const marker = document.getElementById('hiroMarker');
+        const infoBtnContainer = document.getElementById('infoBtnContainer');
+        const infoModal = document.getElementById('infoModal');
+        const openInfoBtn = document.getElementById('openInfoBtn');
+        const closeInfoBtn = document.getElementById('closeInfoBtn');
+        const targetModel = document.getElementById('targetModel');
+
+        // --- Logika Deteksi Marker (Found & Lost) ---
+        marker.addEventListener('markerFound', () => {
+            infoBtnContainer.style.display = 'block';
+        });
+
+        marker.addEventListener('markerLost', () => {
+            // Sembunyikan UI secara otomatis saat marker tidak terlihat kamera
+            infoBtnContainer.style.display = 'none';
+            infoModal.style.display = 'none';
+        });
+
+        // --- Logika Toggle Modal Box ---
+        openInfoBtn.addEventListener('click', () => {
+            infoModal.style.display = 'flex';
+        });
+
+        closeInfoBtn.addEventListener('click', () => {
+            infoModal.style.display = 'none';
+        });
+
+        // --- Logika Fitur Dragging Rotasi (Sumbu Y Terkunci) ---
+        let isDragging = false;
+        let previousMousePosition = { x: 0 };
+        
+        // Konstanta sensitivitas rotasi layar sentuh & mouse
+        const rotationSpeed = 0.5; 
+
+        // Fungsi Handler Start (Mouse & Touch)
+        function startRotate(clientX) {
+            // Hanya aktif memutar jika marker terdeteksi di kamera
+            if (infoBtnContainer.style.display === 'block' || infoBtnContainer.style.display === 'flex') {
+                isDragging = true;
+                previousMousePosition.x = clientX;
+            }
+        }
+
+        // Fungsi Handler Move (Menghitung Delta Gerakan dan Mengubah Rotasi Y)
+        function moveRotate(clientX) {
+            if (!isDragging) return;
+
+            let deltaX = clientX - previousMousePosition.x;
+            
+            // Ambil data rotasi saat ini dari komponen internal A-Frame
+            let currentRotation = targetModel.getAttribute('rotation');
+            
+            // Update HANYA sumbu Y, kunci sumbu X dan Z ke angka 0
+            let newRotationY = currentRotation.y + (deltaX * rotationSpeed);
+            
+            targetModel.setAttribute('rotation', {
+                x: 0,
+                y: newRotationY,
+                z: 0
+            });
+
+            previousMousePosition.x = clientX;
+        }
+
+        // Fungsi Handler Stop
+        function stopRotate() {
+            isDragging = false;
+        }
+
+        // Listener Event untuk Mouse (Desktop)
+        window.addEventListener('mousedown', (e) => startRotate(e.clientX));
+        window.addEventListener('mousemove', (e) => moveRotate(e.clientX));
+        window.addEventListener('mouseup', stopRotate);
+
+        // Listener Event untuk Touch (Mobile/Tablet)
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                startRotate(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                moveRotate(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', stopRotate);
+    </script>
+</body>
+</html>
